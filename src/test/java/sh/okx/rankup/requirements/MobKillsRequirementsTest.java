@@ -22,7 +22,7 @@ public class MobKillsRequirementsTest extends RankupTest {
     player.setStatistic(Statistic.KILL_ENTITY, EntityType.SNOWMAN, 2);
     player.setStatistic(Statistic.KILL_ENTITY, EntityType.MUSHROOM_COW, 1);
 
-    Rank rank = plugin.getRankups().getFirst();
+    Rank rank = plugin.getRankups().findTrackOrDefault(player).getFirst().getRank();
 
     assertEquals(3 - 2, rank.getRequirement(player, "mob-kills#snow_golem").getRemaining(player));
     assertEquals(3 - 1, rank.getRequirement(player, "mob-kills#mushroom_cow").getRemaining(player));

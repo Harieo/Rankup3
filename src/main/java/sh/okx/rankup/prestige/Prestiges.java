@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import sh.okx.rankup.RankupPlugin;
 import sh.okx.rankup.ranks.RankElement;
 import sh.okx.rankup.ranks.RankList;
+import sh.okx.rankup.ranks.RankTrack;
 
 public class Prestiges extends RankList<Prestige> {
   public Prestiges(RankupPlugin plugin, FileConfiguration config) {
@@ -24,8 +25,8 @@ public class Prestiges extends RankList<Prestige> {
   }
 
   @Override
-  protected void addLastRank(RankupPlugin plugin) {
-    RankElement<Prestige> last = getTree().last();
+  protected void addLastRank(RankupPlugin plugin, RankTrack<Prestige> track) {
+    RankElement<Prestige> last = track.last();
     last.setNext(new RankElement<>(new LastPrestige(plugin, last.getRank().getNext()), null));
   }
 

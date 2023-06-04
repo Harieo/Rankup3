@@ -56,7 +56,9 @@ public class PrestigeCommand implements CommandExecutor {
       case "text":
         confirming.put(player, System.currentTimeMillis());
         Prestige next = rankElement.getNext().getRank();
-        Rank nextRank = next == null ? prestiges.getTree().last().getRank() : next;
+        Rank nextRank = next == null ? prestiges.findTrack(player)
+                .orElseThrow(() -> new IllegalStateException("Prestiged player not in any track"))
+                .last().getRank() : next;
 
         plugin.getMessage(prestige, Message.PRESTIGE_CONFIRMATION)
             .replacePlayer(player)

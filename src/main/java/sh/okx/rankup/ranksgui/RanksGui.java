@@ -45,7 +45,9 @@ public class RanksGui {
 
         int index = offset;
         int rowIndex = offset + width;
-        RankElement<Rank> rankElement = plugin.getRankups().getTree().getFirst();
+        RankElement<Rank> rankElement = plugin.getRankups().findTrack(playerRankElement.getRank())
+                .orElseThrow(() -> new IllegalStateException("Rank exists without a track: " + playerRankElement.getRank().getRank()))
+                .getFirst();
         boolean complete = playerRankElement != null;
         while(rankElement.hasNext()) {
             ConfigurationSection rankPath = plugin.getSection(rankElement.getRank(), "rankup.ranksgui");

@@ -47,18 +47,20 @@ public class RankupExpansion implements Expansion {
                     replacePattern(parts[1]), parts.length > 2 ? parts[2] : "");
         } else if (params.startsWith("rank_requirement_")) {
             String[] parts = params.split("_", 5);
-            return getPlaceholderRequirement(player, rankups.getRankByName(parts[2]),
+            return getPlaceholderRequirement(player, rankups.getRankByName(parts[2]).orElse(null),
                     replacePattern(parts[3]), parts.length > 4 ? parts[4] : "");
         } else if (params.startsWith("rank_money_")) {
             String[] parts = params.split("_", 4);
-            double amount = Objects.requireNonNull(rankups.getRankByName(parts[2]), "Rankup " + parts[2] + " does not exist").getRequirement(player, "money").getValueDouble();
+            double amount = rankups.getRankByName(parts[2])
+                    .orElseThrow(() -> new NullPointerException("Rankup " + parts[2] + " does not exist"))
+                    .getRequirement(player, "money").getValueDouble();
             if (parts.length > 3 && parts[3].equalsIgnoreCase("left")) {
                 amount = amount - plugin.getEconomy().getBalance(player);
             }
             return plugin.getPlaceholders().formatMoney(Math.max(0, amount));
         } else if (params.startsWith("status_")) {
             String[] parts = params.split("_",  2);
-            Rank statusRank = rankups.getRankByName(parts[1]);
+            Rank statusRank = rankups.getRankByName(parts[1]).orElse(null);
 
             if (statusRank == null) {
                 return null;
@@ -71,7 +73,9 @@ public class RankupExpansion implements Expansion {
             }
 
             // is playerRank before or after statusRank?
-            for (RankElement<Rank> element : rankups.getTree().asList()) {
+            for (RankElement<Rank> element : rankups.findTrack(player)
+                    .orElseThrow(() -> new IllegalStateException("Player is unexpectedly trackless")) // They should be in a track, but they aren't.
+                    .asElementList()) {
                 if (element.getRank().equals(statusRank)) {
                     return getPlaceholder("status.complete");
                 } else if (element.getRank().equals(rank)) {
@@ -103,13 +107,13 @@ public class RankupExpansion implements Expansion {
                 if (prestigeElement != null && !prestigeElement.hasNext()) {
                     return getPlaceholder("highest-rank");
                 }
-                return orElse(prestigeElement, e -> e.getNext().getRank().getRank(), prestiges.getTree().getFirst().getNext().getRank().getRank());
+                return orElse(prestigeElement, e -> e.getNext().getRank().getRank(), prestiges.findTrackOrDefault(player).getFirst().getNext().getRank().getRank());
             case "next_prestige_name":
                 requirePrestiging(prestiges, params);
                 if (prestigeElement != null && !prestigeElement.hasNext()) {
                     return getPlaceholder("highest-rank");
                 } else {
-                    return orElse(prestigeElement, e -> e.getNext().getRank().getDisplayName(), prestiges.getTree().getFirst().getNext().getRank().getDisplayName());
+                    return orElse(prestigeElement, e -> e.getNext().getRank().getDisplayName(), prestiges.findTrackOrDefault(player).getFirst().getNext().getRank().getDisplayName());
                 }
             case "prestige_money":
                 requirePrestiging(prestiges, params);

@@ -46,12 +46,12 @@ public class StringMessageBuilder implements MessageBuilder {
     return this;
   }
 
-  public StringMessageBuilder replaceFirstPrestige(Rank rank, Prestiges prestiges, String with) {
+  /*public StringMessageBuilder replaceFirstPrestige(Rank rank, Prestiges prestiges, String with) {
     if (prestiges != null && prestiges.getFirst().equals(rank)) {
       replace(Variable.OLD_RANK, with);
     }
     return this;
-  }
+  }*/
 
   /**
    * Fails the MessageBuilder if the message is empty. if this fails, all subsequent calls to that

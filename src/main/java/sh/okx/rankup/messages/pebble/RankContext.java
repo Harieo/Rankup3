@@ -5,7 +5,7 @@ import java.util.List;
 import org.bukkit.entity.Player;
 import sh.okx.rankup.RankupPlugin;
 import sh.okx.rankup.ranks.Rank;
-import sh.okx.rankup.ranks.RankTree;
+import sh.okx.rankup.ranks.RankTrack;
 import sh.okx.rankup.requirements.Requirement;
 
 public class RankContext {
@@ -73,7 +73,7 @@ public class RankContext {
   }
 
   public int getIndex() {
-    RankTree<Rank> tree = plugin.getRankups().getTree();
+    RankTrack<Rank> tree = plugin.getRankups().findTrack(rank).orElseThrow(() -> new IllegalStateException("Untracked rank: " + rank.getRank()));
     int index = 0;
     for (Rank rank : tree) {
       if (rank == this.rank) {

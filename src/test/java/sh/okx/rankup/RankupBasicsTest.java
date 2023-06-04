@@ -46,7 +46,7 @@ public class RankupBasicsTest extends RankupTest {
     plugin.getHelper().rankup(player);
 
     player.assertSaid(plugin.getMessage(Message.NO_RANKUP).replacePlayer(player)
-        .replaceRank(plugin.getRankups().getTree().last().getRank()).toString());
+        .replaceRank(plugin.getRankups().findTrackOrDefault(player).last().getRank()).toString());
     player.assertNoMoreSaid();
   }
 
@@ -59,7 +59,7 @@ public class RankupBasicsTest extends RankupTest {
     groupProvider.addGroup(player.getUniqueId(), "A");
     plugin.getHelper().rankup(player);
 
-    RankElement<Rank> element = plugin.getRankups().getTree().getFirst();
+    RankElement<Rank> element = plugin.getRankups().findTrackOrDefault(player).getFirst();
     Rank rank = element.getRank();
 
     player.assertSaid(plugin.getMessage(rank, Message.REQUIREMENTS_NOT_MET).replacePlayer(player).replaceOldRank(rank).replaceRank(element.getNext().getRank()).toString(player));

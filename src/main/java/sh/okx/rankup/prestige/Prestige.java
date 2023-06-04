@@ -63,7 +63,7 @@ public class Prestige extends Rank {
     boolean inFrom = plugin.getPermissions().inGroup(player.getUniqueId(), from);
     if (rank == null && inFrom) {
       // not in any other prestiges
-      for (Prestige prestige : plugin.getPrestiges().getTree()) {
+      for (Prestige prestige : plugin.getPrestiges().findTrackOrDefault(player)) {
         if (prestige != this && prestige.isIn(player)) {
           return false;
         }

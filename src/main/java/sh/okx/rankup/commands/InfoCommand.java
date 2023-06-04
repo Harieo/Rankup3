@@ -21,6 +21,7 @@ import sh.okx.rankup.prestige.Prestige;
 import sh.okx.rankup.prestige.Prestiges;
 import sh.okx.rankup.ranks.Rank;
 import sh.okx.rankup.ranks.RankElement;
+import sh.okx.rankup.ranks.RankTrack;
 import sh.okx.rankup.ranks.Rankups;
 import sh.okx.rankup.util.UpdateNotifier;
 
@@ -137,7 +138,9 @@ public class InfoCommand implements TabExecutor {
           return true;
         }
 
-        RankElement<Rank> prevRankElement = plugin.getRankups().getTree().getFirst();
+        RankElement<Rank> prevRankElement = plugin.getRankups().findTrack(player)
+                .orElseThrow(() -> new IllegalStateException("Untracked player placed in rank"))
+                .getFirst();
         while(prevRankElement.hasNext() && !prevRankElement.getNext().getRank().equals(currentRank)) {
           prevRankElement = prevRankElement.getNext();
         }
@@ -161,7 +164,7 @@ public class InfoCommand implements TabExecutor {
       } else if (args[0].equalsIgnoreCase("placeholders") && sender.hasPermission("rankup.admin")) {
         sender.sendMessage("--- Rankup placeholders ---");
         if (args.length > 1 && args[1].equalsIgnoreCase("status")) {
-          for (Rank rank : plugin.getRankups().getTree()) {
+          for (Rank rank : plugin.getRankups().getAll()) {
             String placeholder = "status_" + rank.getRank();
             sender.sendMessage(placeholder + ": " + plugin.getPlaceholders().getExpansion().placeholder(sender instanceof Player ? (Player) sender : null, placeholder));
           }
@@ -192,15 +195,18 @@ public class InfoCommand implements TabExecutor {
         }
         return true;
       } else if (args[0].equalsIgnoreCase("tree") && sender.hasPermission("rankup.admin")) {
-        RankElement<Rank> element = plugin.getRankups().getTree().getFirst();
-        while (element.hasNext()) {
-          Rank rank = element.getRank();
-          RankElement<Rank> next = element.getNext();
-          Rank nextRank = next.getRank();
-          sender.sendMessage(rank.getRank() + " (" + rank.getNext() + ") -> " + nextRank.getRank() + " (" + nextRank.getNext() + ")");
-          element = next;
+        Rankups rankups = plugin.getRankups();
+        for (RankTrack<Rank> track : rankups.getTrackSet()) {
+          RankElement<Rank> element = track.getFirst();
+          while (element.hasNext()) {
+            Rank rank = element.getRank();
+            RankElement<Rank> next = element.getNext();
+            Rank nextRank = next.getRank();
+            sender.sendMessage(rank.getRank() + " (" + rank.getNext() + ") -> " + nextRank.getRank() + " (" + nextRank.getNext() + ")");
+            element = next;
+          }
+          return true;
         }
-        return true;
       } else if (args[0].equalsIgnoreCase("playtime") && (sender.hasPermission("rankup.playtime.get") || sender.hasPermission("rankup.playtime"))) {
         Statistic playOneTick;
         try {

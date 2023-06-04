@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -270,7 +272,7 @@ public class RankupPlugin extends JavaPlugin {
   }
 
   private void addAllRequirements(Map<String, Integer> map, RankList<? extends Rank> ranks) {
-    for (Rank rank : ranks.getTree()) {
+    for (Rank rank : ranks.getAll()) {
       for (Requirement requirement : rank.getRequirements().getRequirements(null)) {
         String name = requirement.getName();
         map.put(name, map.getOrDefault(name, 0) + 1);
@@ -462,7 +464,8 @@ public class RankupPlugin extends JavaPlugin {
   public MessageBuilder getMessage(CommandSender player, Message message, Rank oldRank, Rank rank) {
     Rank actualOldRank;
     if (oldRank instanceof Prestige && oldRank.getRank() == null) {
-      actualOldRank = rankups.getByName(((Prestige) oldRank).getFrom()).getRank();
+      String name = ((Prestige) oldRank).getFrom();
+      actualOldRank = rankups.getByName(name).orElseThrow(() -> new NoSuchElementException("Rank cannot be identified by name: " + name)).getRank();
     } else {
       actualOldRank = oldRank;
     }

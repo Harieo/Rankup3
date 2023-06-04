@@ -20,8 +20,8 @@ public class Rankups extends RankList<Rank> {
   }
 
   @Override
-  protected void addLastRank(RankupPlugin plugin) {
-    RankElement<Rank> last = getTree().last();
+  protected void addLastRank(RankupPlugin plugin, RankTrack<Rank> tree) {
+    RankElement<Rank> last = tree.last();
     String lastRankDisplayName = plugin.getConfig().getString("placeholders.last-rank-display-name");
     String lastRankName = last.getRank().getNext();
     if (lastRankDisplayName == null) {

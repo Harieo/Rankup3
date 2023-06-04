@@ -32,7 +32,7 @@ public class PebbleMessageBuilder implements MessageBuilder {
   private void replaceInitial() {
     lastMinuteContext.put("ranks", player -> {
       List<RankContext> ranks = new ArrayList<>();
-      for (Rank rank : plugin.getRankups().getTree()) {
+      for (Rank rank : plugin.getRankups().findTrackOrDefault(player)) {
         ranks.add(new RankContext(plugin, player, rank));
       }
       return ranks;

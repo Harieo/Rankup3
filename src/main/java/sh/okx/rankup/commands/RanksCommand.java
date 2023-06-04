@@ -1,6 +1,7 @@
 package sh.okx.rankup.commands;
 
 import lombok.RequiredArgsConstructor;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -33,7 +34,22 @@ public class RanksCommand implements CommandExecutor {
 
     Message message = !(sender instanceof Player && !(playerRank != null && playerRank.hasNext()))
         && playerRank == null ? Message.RANKS_INCOMPLETE : Message.RANKS_COMPLETE;
-    RankElement<Rank> rank = rankups.getTree().getFirst();
+    RankElement<Rank> rank;
+    if (sender instanceof Player) {
+      Player player = (Player) sender;
+      rank = rankups.findTrackOrDefault(player).getFirst();
+    } else if (args.length > 0) { // The console has specified a track which can be retrieved
+      String rankName = args[0];
+      rank = rankups.getByName(rankName).orElse(null);
+      if (rank == null) {
+        sender.sendMessage(ChatColor.RED + "No rank exists with name: " + rankName);
+        return false;
+      }
+    } else {
+      sender.sendMessage(ChatColor.RED + "As console, please specify the first rank in the track you wish to view: /ranks <rank name>");
+      return false;
+    }
+
     while (rank.hasNext()) {
       RankElement<Rank> next = rank.getNext();
       if (rank.getRank().equals(pRank)) {

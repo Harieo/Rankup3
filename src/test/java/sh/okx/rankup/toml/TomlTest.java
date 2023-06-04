@@ -19,7 +19,7 @@ public class TomlTest extends RankupTest {
     PlayerMock player = server.addPlayer();
 
     Rankups ranks = plugin.getRankups();
-    assertEquals(1500, ranks.getFirst().getRequirement(null, "money").getValueDouble());
+    assertEquals(1500, ranks.findTrackOrDefault(player).getFirst().getRank().getRequirement(null, "money").getValueDouble());
 
     plugin.getPermissions().addGroup(player.getUniqueId(), "C");
     player.addAttachment(plugin, "rankup.rankup", true);

@@ -172,7 +172,7 @@ public class RankupHelper {
       plugin.getMessage(pMessage)
           .failIf(!message)
           .replacePlayer(player)
-          .replaceRank(rankups.getTree().last().getRank())
+          .replaceRank(rankups.findTrackOrDefault(player).last().getRank())
           .send(player);
       return false;
     } else if (!rank.hasRequirements(player)) { // check if they can afford it

@@ -1,6 +1,7 @@
 package sh.okx.rankup.commands;
 
 import lombok.RequiredArgsConstructor;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,7 +32,22 @@ public class PrestigesCommand implements CommandExecutor {
     plugin.sendHeaderFooter(sender, playerRank, Message.PRESTIGES_HEADER);
 
     Message message = playerRank == null ? Message.PRESTIGES_INCOMPLETE : Message.PRESTIGES_COMPLETE;
-    RankElement<Prestige> prestige = prestiges.getTree().getFirst();
+    RankElement<Prestige> prestige;
+    if (sender instanceof Player) {
+      Player player = (Player) sender;
+      prestige = prestiges.findTrackOrDefault(player).getFirst();
+    } else if (args.length > 0) { // The console has specified a track which can be retrieved
+      String rankName = args[0];
+      prestige = prestiges.getByName(rankName).orElse(null);
+      if (prestige == null) {
+        sender.sendMessage(ChatColor.RED + "No prestige exists with name: " + rankName);
+        return false;
+      }
+    } else {
+      sender.sendMessage(ChatColor.RED + "As console, please specify the first prestige in the track you wish to view: /prestiges <prestige name>");
+      return false;
+    }
+
     while (prestige.hasNext()) {
       RankElement<Prestige> next = prestige.getNext();
       if (prestige.getRank().equals(playerRank)) {

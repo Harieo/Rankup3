@@ -1,24 +1,29 @@
 package sh.okx.rankup.ranks;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Predicate;
+
 import lombok.Getter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sh.okx.rankup.RankupPlugin;
 
 public abstract class RankList<T extends Rank> {
 
   protected RankupPlugin plugin;
   @Getter
-  private RankTree<T> tree;
+  private final Set<RankTrack<T>> trackSet = new HashSet<>();
 
   public RankList(RankupPlugin plugin, Collection<? extends T> ranks) {
     this.plugin = plugin;
     List<RankElement<T>> rankElements = new ArrayList<>();
     for (T rank : ranks) {
+      if (getRankByName(rank.getRank()).isPresent()) {
+        plugin.getLogger().warning("Duplicate rank names are not supported: " + rank.getRank());
+        continue;
+      }
+
       if (rank != null && validateSection(rank)) {
         // find next
         rankElements.add(findNext(rank, rankElements));
@@ -29,18 +34,22 @@ public abstract class RankList<T extends Rank> {
 
     for (RankElement<T> rankElement : rankElements) {
       if (rankElement.isRootNode()) {
-        if (tree == null) {
-          tree = new RankTree<>(rankElement);
-          addLastRank(plugin);
-        } else {
-          plugin.getLogger().severe("Multiple root rankup nodes detected (a root rankup nodes is a rankup that does not have anything that ranks up to it). This may lead to inconsistent behaviour.");
-          plugin.getLogger().severe("Conflicting root node: " + rankElement.getRank() + ". Using root node: " + tree.getFirst().getRank());
-        }
+        RankTrack<T> rootedTree = new RankTrack<>(rankElement);
+        trackSet.add(rootedTree);
+        addLastRank(plugin, rootedTree);
       }
     }
   }
 
-  protected abstract void addLastRank(RankupPlugin plugin);
+  public Set<T> getAll() {
+    Set<T> ranks = new HashSet<>();
+    for (RankTrack<T> track : trackSet) {
+      ranks.addAll(track.asRankList());
+    }
+    return ranks;
+  }
+
+  protected abstract void addLastRank(RankupPlugin plugin, RankTrack<T> tree);
 
   private RankElement<T> findNext(T rank, List<RankElement<T>> rankElements) {
     Objects.requireNonNull(rank);
@@ -76,55 +85,88 @@ public abstract class RankList<T extends Rank> {
     return true;
   }
 
-  public T getFirst() {
-    return tree.getFirst().getRank();
+  public Optional<T> findRank(@NotNull Predicate<T> filter) {
+    for (RankTrack<T> track : trackSet) {
+      for (T rank : track) {
+        if (filter.test(rank)) {
+          return Optional.of(rank);
+        }
+      }
+    }
+
+    return Optional.empty();
   }
 
-  public T getRankByName(String name) {
+  public Optional<RankElement<T>> findRankElement(@NotNull Predicate<RankElement<T>> filter) {
+    for (RankTrack<T> track : trackSet) {
+      for (RankElement<T> element : track.asElementList()) {
+        if (filter.test(element)) {
+          return Optional.of(element);
+        }
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Find the {@link RankTrack} which a {@link Player} is currently on. If they are on multiple tracks, the first will
+   * be returned.
+   *
+   * @param player the player to find the track of
+   * @return optionally the first track the player is on
+   */
+  public Optional<RankTrack<T>> findTrack(@NotNull Player player) {
+    for (RankTrack<T> track : trackSet) {
+      if (track.getFirst().getRank().isIn(player)) {
+        return Optional.of(track);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Finds the {@link RankTrack} which a {@link Player} is on or returns one of the available tracks at random.
+   *
+   * @param player the player to try to find the track of
+   * @return the relevant track or a random track if {@link #findTrack(Player)} is empty
+   */
+  public RankTrack<T> findTrackOrDefault(@NotNull Player player) {
+    return findTrack(player).orElse(trackSet.iterator().next());
+  }
+
+  /**
+   * Finds the {@link RankTrack} which contains the given rank.
+   *
+   * @param rank the rank to compare with tracks
+   * @return the track which contains the rank, if one exists
+   */
+  public Optional<RankTrack<T>> findTrack(@NotNull T rank) {
+    return trackSet.stream().filter(track -> track.contains(rank)).findAny();
+  }
+
+  public Optional<T> getRankByName(@Nullable String name) {
     if (name == null) {
-      return null;
+      return Optional.empty();
+    } else {
+      return findRank(rank -> rank.getRank().equalsIgnoreCase(name));
     }
-    for (T rank : tree) {
-      if (name.equalsIgnoreCase(rank.getRank())) {
-        return rank;
-      }
-    }
-    return null;
   }
 
-  public RankElement<T> getByName(String name) {
+  public Optional<RankElement<T>> getByName(String name) {
     if (name == null) {
-      return null;
+      return Optional.empty();
+    } else {
+      return findRankElement(element -> name.equals(element.getRank().getRank()));
     }
-    List<RankElement<T>> rankElements = tree.asList();
-    for (RankElement<T> rank : rankElements) {
-      if (name.equalsIgnoreCase(rank.getRank().getRank())) {
-        return rank;
-      }
-    }
-    return null;
   }
 
 
-  public RankElement<T> getByPlayer(Player player) {
-    List<RankElement<T>> list = tree.asList();
-    Collections.reverse(list);
-    for (RankElement<T> t : list) {
-      if (t.getRank().isIn(player)) {
-        return t;
-      }
-    }
-    return null;
+  public RankElement<T> getByPlayer(@NotNull Player player) {
+    return findRankElement(element -> element.getRank().isIn(player)).orElse(null);
   }
 
   public T getRankByPlayer(Player player) {
-    List<RankElement<T>> list = tree.asList();
-    Collections.reverse(list);
-    for (RankElement<T> t : list) {
-      if (t.getRank().isIn(player)) {
-        return t.getRank();
-      }
-    }
-    return null;
+    return findRank(rank -> rank.isIn(player)).orElse(null);
   }
 }
